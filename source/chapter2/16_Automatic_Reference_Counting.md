@@ -1,4 +1,4 @@
-# 自动引用计数
+# 自动引用计数（Automatic Reference Counting）
 -----------------
 
 > 1.0
@@ -17,7 +17,7 @@
 - [闭包引起的循环强引用](#strong_reference_cycles_for_closures)
 - [解决闭包引起的循环强引用](#resolving_strong_reference_cycles_for_closures)
 
-Swift 使用自动引用计数（ARC）机制来跟踪和管理你的应用程序的内存。通常情况下，Swift 的内存管理机制会一直起着作用，你无须自己来考虑内存的管理。ARC 会在类的实例不再被使用时，自动释放其占用的内存。
+Swift 使用自动引用计数（ARC）机制来跟踪和管理你的应用程序的内存。通常情况下，Swift 内存管理机制会一直起作用，你无须自己来考虑内存的管理。ARC 会在类的实例不再被使用时，自动释放其占用的内存。
 
 然而，在少数情况下，ARC 为了能帮助你管理内存，需要更多的关于你的代码之间关系的信息。本章描述了这些情况，并且为你示范怎样启用 ARC 来管理你的应用程序的内存。
 
@@ -121,10 +121,10 @@ class Person {
 
 ```swift
 class Apartment {
-    let number: Int
-    init(number: Int) { self.number = number }
+    let unit: String
+    init(unit: String) { self.unit = unit }
     var tenant: Person?
-    deinit { print("Apartment #\(number) is being deinitialized") }
+    deinit { print("Apartment \(unit) is being deinitialized") }
 }
 ```
 
@@ -134,45 +134,45 @@ class Apartment {
 
 这两个类都定义了析构函数，用以在类实例被析构的时候输出信息。这让你能够知晓`Person`和`Apartment`的实例是否像预期的那样被销毁。
 
-接下来的代码片段定义了两个可选类型的变量`john`和`number73`，并分别被设定为下面的`Apartment`和`Person`的实例。这两个变量都被初始化为`nil`，这正是可选的优点：
+接下来的代码片段定义了两个可选类型的变量`john`和`unit4A`，并分别被设定为下面的`Apartment`和`Person`的实例。这两个变量都被初始化为`nil`，这正是可选的优点：
 
 ```swift
 var john: Person?
-var number73: Apartment?
+var unit4A: Apartment?
 ```
 
-现在你可以创建特定的`Person`和`Apartment`实例并将赋值给`john`和`number73`变量：
+现在你可以创建特定的`Person`和`Apartment`实例并将赋值给`john`和`unit4A`变量：
 
 ```swift
 john = Person(name: "John Appleseed")
-number73 = Apartment(number: 73)
+unit4A = Apartment(unit: "4A")
 ```
 
-在两个实例被创建和赋值后，下图表现了强引用的关系。变量`john`现在有一个指向`Person`实例的强引用，而变量`number73`有一个指向`Apartment`实例的强引用：
+在两个实例被创建和赋值后，下图表现了强引用的关系。变量`john`现在有一个指向`Person`实例的强引用，而变量`unit4A`有一个指向`Apartment`实例的强引用：
 
 ![](https://developer.apple.com/library/prerelease/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Art/referenceCycle01_2x.png)
 
-现在你能够将这两个实例关联在一起，这样人就能有公寓住了，而公寓也有了房客。注意感叹号是用来展开和访问可选变量`john`和`number73`中的实例，这样实例的属性才能被赋值：
+现在你能够将这两个实例关联在一起，这样人就能有公寓住了，而公寓也有了房客。注意感叹号是用来展开和访问可选变量`john`和`unit4A`中的实例，这样实例的属性才能被赋值：
 
 ```swift
-john!.apartment = number73
-number73!.tenant = john
+john!.apartment = unit4A
+unit4A!.tenant = john
 ```
 
 在将两个实例联系在一起之后，强引用的关系如图所示：
 
 ![](https://developer.apple.com/library/prerelease/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Art/referenceCycle02_2x.png)
 
-不幸的是，这两个实例关联后会产生一个循环强引用。`Person`实例现在有了一个指向`Apartment`实例的强引用，而`Apartment`实例也有了一个指向`Person`实例的强引用。因此，当你断开`john`和`number73`变量所持有的强引用时，引用计数并不会降为 0，实例也不会被 ARC 销毁：
+不幸的是，这两个实例关联后会产生一个循环强引用。`Person`实例现在有了一个指向`Apartment`实例的强引用，而`Apartment`实例也有了一个指向`Person`实例的强引用。因此，当你断开`john`和`unit4A`变量所持有的强引用时，引用计数并不会降为 0，实例也不会被 ARC 销毁：
 
 ```swift
 john = nil
-number73 = nil
+unit4A = nil
 ```
 
 注意，当你把这两个变量设为`nil`时，没有任何一个析构函数被调用。循环强引用会一直阻止`Person`和`Apartment`类实例的销毁，这就在你的应用程序中造成了内存泄漏。
 
-在你将`john`和`number73`赋值为`nil`后，强引用关系如下图：
+在你将`john`和`unit4A`赋值为`nil`后，强引用关系如下图：
 
 ![](https://developer.apple.com/library/prerelease/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Art/referenceCycle03_2x.png)
 
@@ -213,24 +213,24 @@ class Person {
 
 ```swift
 class Apartment {
-    let number: Int
-    init(number: Int) { self.number = number }
+    let unit: String
+    init(unit: String) { self.unit = unit }
     weak var tenant: Person?
-    deinit { print("Apartment #\(number) is being deinitialized") }
+    deinit { print("Apartment \(unit) is being deinitialized") }
 }
 ```
 
-然后跟之前一样，建立两个变量（`john`和`number73`）之间的强引用，并关联两个实例：
+然后跟之前一样，建立两个变量（`john`和`unit4A`）之间的强引用，并关联两个实例：
 
 ```swift
 var john: Person?
-var number73: Apartment?
+var unit4A: Apartment?
 
 john = Person(name: "John Appleseed")
-number73 = Apartment(number: 73)
+unit4A = Apartment(unit: "4A")
 
-john!.apartment = number73
-number73!.tenant = john
+john!.apartment = unit4A
+unit4A!.tenant = john
 ```
 
 现在，两个关联在一起的实例的引用关系如下图所示：
@@ -248,19 +248,26 @@ john = nil
 // prints "John Appleseed is being deinitialized"
 ```
 
-唯一剩下的指向`Apartment`实例的强引用来自于变量`number73`。如果你断开这个强引用，再也没有指向`Apartment`实例的强引用了：
+唯一剩下的指向`Apartment`实例的强引用来自于变量`unit4A`。如果你断开这个强引用，再也没有指向`Apartment`实例的强引用了：
 
 ![](https://developer.apple.com/library/prerelease/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Art/weakReference03_2x.png)
 
 由于再也没有指向`Apartment`实例的强引用，该实例也会被销毁：
 
 ```swift
-number73 = nil
-// prints "Apartment #73 is being deinitialized"
+unit4A = nil
+// prints "Apartment 4A is being deinitialized"
 ```
 
-上面的两段代码展示了变量`john`和`number73`在被赋值为`nil`后，`Person`实例和`Apartment`实例的析构函数都打印出“销毁”的信息。这证明了引用循环被打破了。
+上面的两段代码展示了变量`john`和`unit4A`在被赋值为`nil`后，`Person`实例和`Apartment`实例的析构函数都打印出“销毁”的信息。这证明了引用循环被打破了。
 
+<!--
+NOTE
+In systems that use garbage collection, weak pointers are sometimes used to implement a simple caching mechanism because objects with no strong references are deallocated only when memory pressure triggers garbage collection. However, with ARC, values are deallocated as soon as their last strong reference is removed, making weak references unsuitable for such a purpose.
+ -->
+ >注意：
+ 在使用垃圾收集的系统里，弱指针有时用来实现简单的缓冲机制，因为没有强引用的对象只会在内存压力触发垃圾收集时才被销毁。但是在 ARC 中，一旦值的最后一个强引用被删除，就会被立即销毁，这导致弱引用并不适合上面的用途。
+ 
 <a name="2"></a>
 ### 无主引用
 
@@ -442,6 +449,20 @@ class HTMLElement {
 
 可以像实例方法那样去命名、使用`asHTML`属性。然而，由于`asHTML`是闭包而不是实例方法，如果你想改变特定元素的 HTML 处理的话，可以用自定义的闭包来取代默认值。
 
+<!--
+For example, the asHTML property could be set to a closure that defaults to some text if the text property is nil, in order to prevent the representation from returning an empty HTML tag:
+-->
+例如，可以将一个闭包赋值给`asHTML`属性，这个闭包能在文本属性是 nil 时用默认文本，这是为了避免返回一个空的 `HTML` 标签：
+```swift
+let heading = HTMLElement(name: "h1")
+let defaultText = "some default text"
+heading.asHTML = {
+    return "<\(heading.name)>\(heading.text ?? defaultText)</\(heading.name)>"
+}
+print(heading.asHTML())
+// prints "<h1>some default text</h1>"
+```
+
 > 注意:  
 `asHTML`声明为`lazy`属性，因为只有当元素确实需要处理为HTML输出的字符串时，才需要使用`asHTML`。也就是说，在默认的闭包中可以使用`self`，因为只有当初始化完成以及`self`确实存在后，才能访问`lazy`属性。
 
@@ -480,8 +501,8 @@ paragraph = nil
 
 在定义闭包时同时定义捕获列表作为闭包的一部分，通过这种方式可以解决闭包和类实例之间的循环强引用。捕获列表定义了闭包体内捕获一个或者多个引用类型的规则。跟解决两个类实例间的循环强引用一样，声明每个捕获的引用为弱引用或无主引用，而不是强引用。应当根据代码关系来决定使用弱引用还是无主引用。
 
->注意:  
-Swift 有如下要求：只要在闭包内使用`self`的成员，就要用`self.someProperty`或者`self.someMethod`（而不只是`someProperty`或`someMethod`）。这提醒你可能会一不小心就捕获了`self`。
+>注意：
+Swift 有如下要求：只要在闭包内使用`self`的成员，就要用`self.someProperty`或者`self.someMethod()`（而不只是`someProperty`或`someMethod()`）。这提醒你可能会一不小心就捕获了`self`。
 
 ###定义捕获列表
 
